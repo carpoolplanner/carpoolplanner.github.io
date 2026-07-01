@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manifest — Carpool Route Planner</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+:root{
+  --paper:#F5F4EC;
+  --card:#FFFFFF;
+  --ink:#25321F;
+  --ink-soft:#71805F;
+  --ink-faint:#A6AF95;
+  --line:#DFDBC9;
+  --amber:#C6892E;
+  --amber-dark:#A66F1F;
+  --good:#3E7C4A;
+  --good-bg:#E9F1E6;
+  --bad:#B5533D;
+  --r1:#3E7C4A;
+  --r2:#B5533D;
+  --r3:#4C6FA5;
+  --r4:#C6892E;
+  --r5:#8B5FA3;
+  --r6:#2F8F82;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:'Inter',system-ui,sans-serif;
+  line-height:1.45;
+}
+.wrap{max-width:1120px;margin:0 auto;padding:0 24px 80px;}
+
+/* ---------- header ---------- */
+header.top{
+  padding:40px 24px 26px;
+  background:var(--ink);
+  color:#F5F4EC;
+}
+header.top .inner{max-width:1120px;margin:0 auto;display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;}
+.brand-eyebrow{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--amber);
+  margin:0 0 8px;font-weight:700;
+  border:1px solid rgba(245,244,236,0.35);display:inline-block;padding:5px 10px;border-radius:3px;
+}
+h1.brand{
+  font-family:'Lora',serif;
+  font-weight:700;
+  font-size:clamp(34px,5.2vw,50px);
+  letter-spacing:.005em;
+  margin:0;
+  line-height:1.05;
+  color:#FFFFFF;
+}
+.brand-tag{color:#C7CDBC;font-size:14.5px;max-width:440px;margin-top:8px;}
+.route-mark{display:flex;gap:6px;align-items:center;}
+.route-mark span{width:9px;height:9px;border-radius:50%;display:inline-block;}
+
+.ticker{
+  background:#1B2417;color:#E7E4D6;
+  border-top:1px solid rgba(245,244,236,0.12);
+}
+.ticker .inner{
+  max-width:1120px;margin:0 auto;padding:11px 24px;
+  display:flex;gap:26px;flex-wrap:wrap;
+  font-family:'JetBrains Mono',monospace;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;
+}
+.ticker .item{display:flex;align-items:baseline;gap:6px;color:#A9B29A;}
+.ticker .item b{color:var(--amber);font-size:13px;letter-spacing:0;}
+
+/* ---------- layout ---------- */
+main{padding-top:36px;}
+.panel{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:28px;
+  margin-bottom:28px;
+}
+.panel h2{
+  font-family:'Lora',serif;
+  text-transform:uppercase;
+  font-size:22px;
+  letter-spacing:.03em;
+  margin:0 0 4px;
+  font-weight:600;
+}
+.panel .sub{color:var(--ink-soft);font-size:14px;margin:0 0 22px;}
+
+.field-row{display:grid;grid-template-columns:1.4fr .8fr;gap:16px;margin-bottom:18px;}
+label{
+  display:block;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;
+  letter-spacing:.08em;color:var(--ink-soft);margin-bottom:6px;
+}
+input[type=text],input[type=time]{
+  width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:6px;
+  font-family:'Inter',sans-serif;font-size:14.5px;background:#FBFBF9;color:var(--ink);
+}
+input:focus{outline:2px solid var(--amber);outline-offset:1px;border-color:var(--amber);}
+
+.rider-table{border-top:1px solid var(--line);margin-top:6px;}
+.rider-row{
+  display:grid;grid-template-columns:28px 1fr 1.5fr 32px;gap:12px;align-items:center;
+  padding:10px 0;border-bottom:1px solid var(--line);
+}
+.rider-index{
+  font-family:'JetBrains Mono',monospace;color:var(--ink-faint);font-size:13px;text-align:right;
+}
+.rider-row input{padding:9px 10px;font-size:14px;}
+.rm-btn{
+  background:none;border:1px solid var(--line);border-radius:6px;width:30px;height:30px;
+  color:var(--ink-soft);cursor:pointer;font-size:15px;line-height:1;
+}
+.rm-btn:hover{border-color:var(--bad);color:var(--bad);}
+.rider-error{grid-column:1/-1;font-size:12.5px;color:var(--bad);margin-top:-4px;}
+.field-error{font-size:12.5px;color:var(--bad);margin-top:7px;}
+
+.add-rider{
+  margin-top:14px;background:none;border:1px dashed var(--ink-faint);color:var(--ink-soft);
+  padding:9px 16px;border-radius:6px;cursor:pointer;font-size:13.5px;font-family:'Inter',sans-serif;
+}
+.add-rider:hover{border-color:var(--ink);color:var(--ink);}
+
+.form-footer{display:flex;justify-content:space-between;align-items:center;margin-top:26px;flex-wrap:wrap;gap:14px;}
+.assumption{font-size:12.5px;color:var(--ink-soft);display:flex;align-items:center;gap:8px;}
+.assumption input{width:64px;padding:5px 6px;font-size:12.5px;text-align:right;}
+
+.go-btn{
+  background:var(--ink);color:#fff;border:none;padding:13px 28px;border-radius:7px;
+  font-family:'Lora',serif;font-weight:700;letter-spacing:.03em;
+  font-size:17px;text-transform:uppercase;cursor:pointer;
+}
+.go-btn:hover{background:var(--amber-dark);}
+.go-btn:disabled{background:var(--ink-faint);cursor:default;}
+
+.status-line{
+  font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--ink-soft);
+  margin-top:14px;min-height:18px;
+}
+.status-line.err{color:var(--bad);}
+
+/* ---------- results ---------- */
+.tabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;}
+.tab{
+  border:1px solid var(--line);background:var(--card);padding:10px 16px;border-radius:8px;
+  cursor:pointer;font-family:'Inter',sans-serif;font-size:13.5px;color:var(--ink-soft);
+}
+.tab .n{font-family:'Lora',serif;font-weight:700;font-size:16px;color:var(--ink);}
+.tab.active{border-color:var(--ink);background:var(--ink);color:#fff;}
+.tab.active .n{color:#fff;}
+
+.map-panel{padding:0;overflow:hidden;}
+#map{height:380px;width:100%;}
+.map-caption{padding:12px 20px;font-size:12px;color:var(--ink-soft);border-top:1px solid var(--line);}
+
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:24px;}
+.stat{background:var(--card);padding:18px 16px;}
+.stat .label{font-family:'JetBrains Mono',monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-soft);margin-bottom:6px;}
+.stat .value{font-family:'Lora',serif;font-size:30px;font-weight:700;line-height:1;}
+.stat .unit{font-size:14px;color:var(--ink-soft);font-weight:400;margin-left:3px;}
+.stat.hero .value{color:var(--good);}
+.stat .sub{font-size:11.5px;color:var(--ink-soft);margin-top:5px;}
+
+.group-card{
+  background:var(--card);border:1px solid var(--line);border-radius:9px;padding:20px 22px;margin-bottom:14px;
+}
+.group-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;}
+.group-title{display:flex;align-items:center;gap:10px;}
+.dot{width:12px;height:12px;border-radius:50%;flex:none;}
+.group-title .t{font-family:'Lora',serif;font-size:19px;font-weight:600;text-transform:uppercase;}
+.group-meta{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-soft);}
+.route-svg{display:block;width:100%;height:auto;margin:6px 0 4px;}
+.route-labels{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+.chip{
+  font-size:12px;background:#F5F5F1;border:1px solid var(--line);padding:4px 10px;border-radius:99px;color:var(--ink);
+}
+
+.option-summary{font-size:13.5px;color:var(--ink-soft);margin-bottom:18px;}
+.footnote{font-size:11.5px;color:var(--ink-faint);margin-top:34px;line-height:1.6;border-top:1px solid var(--line);padding-top:16px;}
+
+.hint{font-size:12.5px;color:var(--ink-soft);margin:-2px 0 10px;}
+
+.feedback-card{
+  background:var(--card);border:1px solid var(--line);border-radius:9px;padding:22px 24px;margin:22px 0 8px;
+}
+.feedback-card h3{font-family:'Lora',serif;font-size:18px;margin:0 0 4px;font-weight:600;}
+.feedback-card p{color:var(--ink-soft);font-size:13.5px;margin:0 0 14px;}
+.feedback-buttons{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
+.fb-btn{
+  border:1px solid var(--ink);background:none;color:var(--ink);padding:9px 18px;border-radius:6px;
+  font-family:'Inter',sans-serif;font-size:13.5px;font-weight:600;cursor:pointer;
+}
+.fb-btn.yes{background:var(--good);border-color:var(--good);color:#fff;}
+.fb-btn.no{color:var(--ink-soft);border-color:var(--line);}
+.fb-btn:disabled{opacity:.55;cursor:default;}
+.feedback-thanks{font-size:13.5px;color:var(--good);font-weight:600;}
+.feedback-count{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-soft);}
+
+footer.credit{background:var(--ink);color:#D8DCC9;margin-top:40px;}
+footer.credit .inner{
+  max-width:1120px;margin:0 auto;padding:26px 24px;
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;
+}
+footer.credit .made-by{font-size:13px;}
+footer.credit .made-by a{color:var(--amber);text-decoration:none;font-weight:600;}
+footer.credit .made-by a:hover{text-decoration:underline;}
+footer.credit .tagline{font-size:12px;color:#8E9880;font-family:'JetBrains Mono',monospace;letter-spacing:.03em;}
+
+.hidden{display:none !important;}
+.spinner{
+  width:14px;height:14px;border:2px solid var(--ink-faint);border-top-color:var(--amber-dark);
+  border-radius:50%;display:inline-block;animation:spin .8s linear infinite;margin-right:8px;vertical-align:-2px;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+@media (max-width:640px){
+  .field-row{grid-template-columns:1fr;}
+  .rider-row{grid-template-columns:20px 1fr 32px;grid-template-areas:"idx name rm" "err err err";}
+  .rider-row input:nth-of-type(1){grid-area:name;}
+  .rider-row .addr-input{grid-column:1/-1;}
+  .stats-row{grid-template-columns:repeat(2,1fr);}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="inner">
+    <div>
+      <p class="brand-eyebrow">Route manifest · v1</p>
+      <h1 class="brand">Manifest</h1>
+      <p class="brand-tag">Give it everyone's address and one destination — it comes back with a few carpool line-ups, the miles they save, and the emissions cut.</p>
+    </div>
+    <div class="route-mark" aria-hidden="true">
+      <span style="background:var(--r1)"></span><span style="background:var(--r2)"></span>
+      <span style="background:var(--r3)"></span><span style="background:var(--r4)"></span>
+    </div>
+  </div>
+</header>
+<div class="ticker">
+  <div class="inner">
+    <span class="item">Plans viewed <b id="tickerVisits">—</b></span>
+    <span class="item">Confirmed carpools <b id="tickerConfirmed">—</b></span>
+  </div>
+</div>
+
+<div class="wrap">
+<main>
+
+  <section class="panel">
+    <h2>Trip intake</h2>
+    <p class="sub">One shared destination. Everyone else gets picked up along the way.</p>
+
+    <div class="field-row">
+      <div>
+        <label for="destAddr">Destination address</label>
+        <input type="text" id="destAddr" placeholder="e.g. 200 W Franklin St, Chapel Hill, NC">
+        <div class="field-error hidden" id="destAddrError"></div>
+      </div>
+      <div>
+        <label for="arriveTime">Arrive by</label>
+        <input type="time" id="arriveTime" value="09:00">
+      </div>
+    </div>
+
+    <label>Riders</label>
+    <p class="hint">Full street address, city, and state for best results — e.g. 1114 Violet St, Durham, NC (not just a street name or zip alone).</p>
+    <div class="rider-table" id="riderTable"></div>
+    <button class="add-rider" id="addRider" type="button">+ Add rider</button>
+
+    <div class="form-footer">
+      <div class="assumption">
+        <span>Emissions factor</span>
+        <input type="text" id="emFactor" value="404">
+        <span>g CO₂ / mile (EPA avg. vehicle — editable)</span>
+      </div>
+      <button class="go-btn" id="planBtn" type="button">Plan carpools</button>
+    </div>
+    <div class="status-line" id="statusLine"></div>
+  </section>
+
+  <section id="resultsSection" class="hidden">
+    <section class="panel map-panel">
+      <div id="map"></div>
+      <div class="map-caption">Showing routes for the option selected below. Base map © OpenStreetMap contributors, routing via OSRM.</div>
+    </section>
+
+    <div class="tabs" id="tabs"></div>
+    <div id="optionBody"></div>
+
+    <div class="feedback-card">
+      <h3>Did this plan actually happen?</h3>
+      <p>Let us know if this group carpooled — it turns the estimate above into a real, counted trip.</p>
+      <div class="feedback-buttons">
+        <button class="fb-btn yes" id="fbYes" type="button">Yes, we carpooled</button>
+        <button class="fb-btn no" id="fbNo" type="button">Not this time</button>
+      </div>
+      <div id="feedbackResult" class="feedback-count">— confirmed carpools so far</div>
+    </div>
+  </section>
+
+  <p class="footnote">
+    Geocoding via OpenStreetMap Nominatim, driving routes and distances via the public OSRM demo server — both free, rate-limited services best suited to prototyping. For production use with reliable uptime, swap in a licensed provider (Google, Mapbox, HERE). Baseline mileage assumes each rider otherwise drives alone, door to door. Route order per car is chosen to minimize total distance ending at the destination; real-world traffic, one-way streets, and pickup timing aren't modeled. "Plans viewed" counts page loads, not unique people; "Confirmed carpools" is self-reported by whoever clicks the button above.
+  </p>
+</main>
+</div>
+
+<footer class="credit">
+  <div class="inner">
+    <div class="made-by">Created by <a href="https://wildflowerdataandlearning.github.io/" target="_blank" rel="noopener">Wildflower Data and Learning</a></div>
+    <div class="tagline">Data-informed tools for real-world learning</div>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+const ROUTE_COLORS = ['#3E7C4A','#B5533D','#4C6FA5','#C6892E','#8B5FA3','#2F8F82'];
+const MILES_PER_METER = 1/1609.34;
+
+// ---------------- visitor / carpool counters (free, no-signup counter API) ----------------
+const COUNTER_BASE = 'https://countapi.mileshilliard.com/api/v1';
+const KEY_VISITS = 'wildflowerdl_manifest_carpool_visits';
+const KEY_CONFIRMED = 'wildflowerdl_manifest_carpool_confirmed';
+const KEY_DECLINED = 'wildflowerdl_manifest_carpool_declined';
+
+async function counterHit(key){
+  try{
+    const res = await fetch(`${COUNTER_BASE}/hit/${key}`);
+    const data = await res.json();
+    return parseInt(data.value, 10);
+  }catch(e){ return null; }
+}
+async function counterGet(key){
+  try{
+    const res = await fetch(`${COUNTER_BASE}/get/${key}`);
+    if(!res.ok) return null;
+    const data = await res.json();
+    return parseInt(data.value, 10);
+  }catch(e){ return null; }
+}
+
+(async () => {
+  const visits = await counterHit(KEY_VISITS);
+  document.getElementById('tickerVisits').textContent = visits !== null ? visits.toLocaleString() : '—';
+  const confirmed = await counterGet(KEY_CONFIRMED);
+  document.getElementById('tickerConfirmed').textContent = confirmed !== null ? confirmed.toLocaleString() : '0';
+})();
+
+async function submitFeedback(didCarpool){
+  document.getElementById('fbYes').disabled = true;
+  document.getElementById('fbNo').disabled = true;
+  const resultEl = document.getElementById('feedbackResult');
+  const val = await counterHit(didCarpool ? KEY_CONFIRMED : KEY_DECLINED);
+  if(didCarpool){
+    if(val !== null) document.getElementById('tickerConfirmed').textContent = val.toLocaleString();
+    resultEl.innerHTML = `<span class="feedback-thanks">Thanks — logged as a real carpool.</span>` + (val !== null ? ` ${val.toLocaleString()} confirmed so far.` : '');
+  }else{
+    resultEl.innerHTML = `Thanks for letting us know.`;
+  }
+}
+document.getElementById('fbYes').addEventListener('click', () => submitFeedback(true));
+document.getElementById('fbNo').addEventListener('click', () => submitFeedback(false));
+
+// ---------------- rider rows ----------------
+let riderSeq = 0;
+const riderTable = document.getElementById('riderTable');
+
+function addRiderRow(name='', addr=''){
+  riderSeq++;
+  const id = riderSeq;
+  const row = document.createElement('div');
+  row.className = 'rider-row';
+  row.dataset.id = id;
+  row.innerHTML = `
+    <div class="rider-index">${riderTable.children.length + 1}</div>
+    <input type="text" class="name-input" placeholder="Rider name" value="${name}">
+    <input type="text" class="addr-input" placeholder="Street address, city, state" value="${addr}">
+    <button class="rm-btn" type="button" title="Remove rider">×</button>
+  `;
+  row.querySelector('.rm-btn').addEventListener('click', () => {
+    row.remove();
+    renumberRiders();
+  });
+  riderTable.appendChild(row);
+}
+function renumberRiders(){
+  [...riderTable.children].forEach((row,i) => {
+    row.querySelector('.rider-index').textContent = i+1;
+  });
+}
+document.getElementById('addRider').addEventListener('click', () => addRiderRow());
+// seed with 4 rows
+addRiderRow('','');
+addRiderRow('','');
+addRiderRow('','');
+addRiderRow('','');
+
+// ---------------- geocoding ----------------
+function cleanAddress(s){
+  return s.trim().replace(/^[,\s]+|[,\s]+$/g, '').replace(/\s{2,}/g, ' ');
+}
+
+async function nominatimQuery(address, countrycodes){
+  const params = new URLSearchParams({ format:'json', limit:'1', addressdetails:'0', q: address });
+  if(countrycodes) params.set('countrycodes', countrycodes);
+  const url = `https://nominatim.openstreetmap.org/search?${params.toString()}`;
+  const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+  if(!res.ok) throw new Error('geocoding request failed');
+  return res.json();
+}
+
+async function geocodeOne(rawAddress){
+  const address = cleanAddress(rawAddress);
+  if(!address) throw new Error('empty address');
+  // first try biased to the US (this app is US-only), then fall back to an
+  // unrestricted search in case the bias itself is what's excluding a match
+  let data = await nominatimQuery(address, 'us');
+  if(!data.length) data = await nominatimQuery(address, null);
+  if(!data.length){
+    const err = new Error(`could not find "${address}" — check the spelling, or add city and state`);
+    err.addressTried = address;
+    throw err;
+  }
+  return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon), label: data[0].display_name };
+}
+
+function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+
+// ---------------- OSRM helpers ----------------
+async function osrmTableOneToMany(sources, dest){
+  // sources: [{lat,lon}], dest: {lat,lon} -> returns distances in meters, array aligned to sources
+  const coords = [...sources, dest].map(p => `${p.lon},${p.lat}`).join(';');
+  const sIdx = sources.map((_,i)=>i).join(';');
+  const dIdx = sources.length;
+  const url = `https://router.project-osrm.org/table/v1/driving/${coords}?sources=${sIdx}&destinations=${dIdx}&annotations=distance`;
+  const res = await fetch(url);
+  if(!res.ok) throw new Error('routing table request failed');
+  const data = await res.json();
+  if(data.code !== 'Ok') throw new Error('routing table error: ' + data.code);
+  return data.distances.map(row => row[0]); // meters, one per source
+}
+
+async function osrmTrip(points, dest){
+  // points: riders in this car, dest fixed as last stop, source=any (best pickup order)
+  const coords = [...points, dest].map(p => `${p.lon},${p.lat}`).join(';');
+  const url = `https://router.project-osrm.org/trip/v1/driving/${coords}?source=any&destination=last&roundtrip=false&geometries=geojson&overview=full`;
+  const res = await fetch(url);
+  if(!res.ok) throw new Error('trip request failed');
+  const data = await res.json();
+  if(data.code !== 'Ok') throw new Error('trip error: ' + data.code);
+  const trip = data.trips[0];
+  // order riders (excluding dest) by waypoint_index
+  const riderWaypoints = data.waypoints.slice(0, points.length);
+  const order = riderWaypoints
+    .map((w,i) => ({ i, idx: w.waypoint_index }))
+    .sort((a,b) => a.idx - b.idx)
+    .map(w => w.i);
+  return { distanceMeters: trip.distance, geometry: trip.geometry, order };
+}
+
+// ---------------- sweep clustering ----------------
+function bearingFrom(dest, p){
+  const toRad = d => d*Math.PI/180;
+  const lat1 = toRad(dest.lat), lat2 = toRad(p.lat);
+  const dLon = toRad(p.lon - dest.lon);
+  const y = Math.sin(dLon)*Math.cos(lat2);
+  const x = Math.cos(lat1)*Math.sin(lat2) - Math.sin(lat1)*Math.cos(lat2)*Math.cos(dLon);
+  let brng = Math.atan2(y,x)*180/Math.PI;
+  return (brng + 360) % 360;
+}
+
+function sweepCluster(riders, dest, capacity){
+  const withBearing = riders.map(r => ({...r, bearing: bearingFrom(dest, r)}));
+  withBearing.sort((a,b) => a.bearing - b.bearing);
+  const groups = [];
+  for(let i=0;i<withBearing.length;i+=capacity){
+    groups.push(withBearing.slice(i, i+capacity));
+  }
+  return groups;
+}
+
+// ---------------- status / status helpers ----------------
+const statusLine = document.getElementById('statusLine');
+function setStatus(text, isErr=false){
+  statusLine.textContent = text;
+  statusLine.classList.toggle('err', isErr);
+}
+
+// ---------------- main plan flow ----------------
+let map, mapLayer;
+let computedOptions = []; // {capacity, groups:[{riders,order,distanceMeters,geometry,color}], baselineMeters, carpoolMeters}
+let destGlobal = null;
+let activeOptionIdx = 0;
+
+document.getElementById('planBtn').addEventListener('click', runPlan);
+
+async function runPlan(){
+  const planBtn = document.getElementById('planBtn');
+  const destAddr = document.getElementById('destAddr').value.trim();
+  const emFactor = parseFloat(document.getElementById('emFactor').value) || 404;
+
+  const riderRows = [...riderTable.children].map(row => ({
+    name: row.querySelector('.name-input').value.trim(),
+    addr: row.querySelector('.addr-input').value.trim(),
+    row
+  })).filter(r => r.addr);
+
+  // clear previous errors
+  riderTable.querySelectorAll('.rider-error').forEach(e => e.remove());
+  const destErrEl = document.getElementById('destAddrError');
+  destErrEl.textContent = '';
+  destErrEl.classList.add('hidden');
+
+  if(!destAddr){ setStatus('Add a destination address first.', true); return; }
+  if(riderRows.length < 2){ setStatus('Add at least 2 riders with addresses to build a carpool.', true); return; }
+
+  planBtn.disabled = true;
+  document.getElementById('resultsSection').classList.add('hidden');
+
+  try{
+    // 1. geocode destination
+    setStatus('Locating destination…');
+    let dest;
+    try{
+      dest = await geocodeOne(destAddr);
+    }catch(e){
+      destErrEl.textContent = e.message[0].toUpperCase() + e.message.slice(1) + '.';
+      destErrEl.classList.remove('hidden');
+      throw new Error('destination address problem');
+    }
+    destGlobal = dest;
+
+    // 2. geocode riders sequentially (Nominatim courtesy rate limit)
+    const riders = [];
+    for(let i=0;i<riderRows.length;i++){
+      setStatus(`Locating rider ${i+1} of ${riderRows.length}…`);
+      try{
+        const g = await geocodeOne(riderRows[i].addr);
+        riders.push({ name: riderRows[i].name || `Rider ${i+1}`, lat: g.lat, lon: g.lon });
+      }catch(e){
+        const err = document.createElement('div');
+        err.className = 'rider-error';
+        err.textContent = e.message[0].toUpperCase() + e.message.slice(1) + '.';
+        riderRows[i].row.appendChild(err);
+        throw new Error(`address problem for rider ${i+1}`);
+      }
+      await sleep(1100);
+    }
+
+    // 3. baseline: everyone drives solo
+    setStatus('Calculating solo-driving baseline…');
+    const soloMeters = await osrmTableOneToMany(riders, dest);
+    const baselineMeters = soloMeters.reduce((a,b)=>a+b, 0);
+
+    // 4. build capacity options
+    const n = riders.length;
+    const candidateCaps = [2,3,4].filter(c => c < n); // riders per car (excluding driver context — just group size)
+    if(candidateCaps.length === 0) candidateCaps.push(Math.max(2, n-1));
+    const caps = [...new Set(candidateCaps)].slice(0,3);
+
+    computedOptions = [];
+    for(const cap of caps){
+      setStatus(`Optimizing routes: ${cap} riders per car…`);
+      const clusters = sweepCluster(riders, dest, cap);
+      const groups = [];
+      let carpoolMeters = 0;
+      for(let gi=0; gi<clusters.length; gi++){
+        const groupRiders = clusters[gi];
+        await sleep(400);
+        const trip = await osrmTrip(groupRiders, dest);
+        const orderedRiders = trip.order.map(i => groupRiders[i]);
+        groups.push({
+          riders: orderedRiders,
+          distanceMeters: trip.distanceMeters,
+          geometry: trip.geometry,
+          color: ROUTE_COLORS[gi % ROUTE_COLORS.length]
+        });
+        carpoolMeters += trip.distanceMeters;
+      }
+      computedOptions.push({ capacity: cap, groups, baselineMeters, carpoolMeters });
+    }
+
+    setStatus('Done.');
+    activeOptionIdx = 0;
+    renderResults();
+  }catch(e){
+    console.error(e);
+    if(e.message.includes('address problem')){
+      setStatus('Fix the highlighted address above and try again.', true);
+    }else{
+      setStatus('Something went wrong: ' + e.message + '. The free routing services are rate-limited — wait a moment and try again.', true);
+    }
+  }finally{
+    planBtn.disabled = false;
+  }
+}
+
+// ---------------- rendering ----------------
+function metersToMiles(m){ return m * MILES_PER_METER; }
+function fmt(n, d=1){ return n.toLocaleString(undefined, {minimumFractionDigits:d, maximumFractionDigits:d}); }
+
+function renderResults(){
+  document.getElementById('resultsSection').classList.remove('hidden');
+  document.getElementById('fbYes').disabled = false;
+  document.getElementById('fbNo').disabled = false;
+  document.getElementById('feedbackResult').textContent = '— confirmed carpools so far';
+  renderTabs();
+  renderOption(activeOptionIdx);
+}
+
+function renderTabs(){
+  const tabs = document.getElementById('tabs');
+  tabs.innerHTML = '';
+  computedOptions.forEach((opt, i) => {
+    const cars = opt.groups.length;
+    const btn = document.createElement('button');
+    btn.className = 'tab' + (i===activeOptionIdx ? ' active' : '');
+    btn.innerHTML = `<span class="n">${cars} car${cars===1?'':'s'}</span><br>${opt.capacity} riders/car max`;
+    btn.addEventListener('click', () => { activeOptionIdx = i; renderResults(); });
+    tabs.appendChild(btn);
+  });
+}
+
+function buildRouteSVG(group){
+  const w = 640, h = 70, pad = 36;
+  const n = group.riders.length + 1; // + destination
+  const step = (w - pad*2) / (n - 1 || 1);
+  let dots = '';
+  let line = `M ${pad} ${h/2}`;
+  for(let i=0;i<n;i++){
+    const x = pad + step*i;
+    line += ` L ${x} ${h/2}`;
+  }
+  for(let i=0;i<group.riders.length;i++){
+    const x = pad + step*i;
+    const initials = group.riders[i].name.split(' ').map(s=>s[0]).slice(0,2).join('').toUpperCase();
+    dots += `<circle cx="${x}" cy="${h/2}" r="11" fill="#fff" stroke="${group.color}" stroke-width="3"/>
+              <text x="${x}" y="${h/2+4}" text-anchor="middle" font-size="10" font-family="JetBrains Mono, monospace" fill="${group.color}" font-weight="700">${initials}</text>`;
+  }
+  const destX = pad + step*(n-1);
+  dots += `<g transform="translate(${destX},${h/2})">
+      <path d="M -8 -14 L 8 -14 L 0 2 Z" fill="${group.color}"/>
+      <circle r="4" fill="${group.color}"/>
+    </g>`;
+  return `<svg class="route-svg" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+    <path d="${line}" stroke="${group.color}" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.55"/>
+    ${dots}
+  </svg>`;
+}
+
+function renderOption(idx){
+  const opt = computedOptions[idx];
+  const body = document.getElementById('optionBody');
+
+  const baselineMi = metersToMiles(opt.baselineMeters);
+  const carpoolMi = metersToMiles(opt.carpoolMeters);
+  const savedMi = baselineMi - carpoolMi;
+  const pctSaved = baselineMi > 0 ? (savedMi/baselineMi*100) : 0;
+  const emFactor = parseFloat(document.getElementById('emFactor').value) || 404;
+  const co2SavedKg = (savedMi * emFactor) / 1000;
+  const co2SavedLb = co2SavedKg * 2.2046;
+
+  let html = `
+    <p class="option-summary">${opt.groups.length} car${opt.groups.length===1?'':'s'}, up to ${opt.capacity} riders each — ${opt.groups.reduce((a,g)=>a+g.riders.length,0)} riders total.</p>
+    <div class="stats-row">
+      <div class="stat"><div class="label">Solo-driving baseline</div><div class="value">${fmt(baselineMi,0)}<span class="unit">mi</span></div></div>
+      <div class="stat"><div class="label">Carpooled distance</div><div class="value">${fmt(carpoolMi,0)}<span class="unit">mi</span></div></div>
+      <div class="stat hero"><div class="label">Miles saved</div><div class="value">${fmt(savedMi,0)}<span class="unit">mi</span></div><div class="sub">${fmt(pctSaved,0)}% reduction</div></div>
+      <div class="stat hero"><div class="label">CO₂ avoided</div><div class="value">${fmt(co2SavedKg,0)}<span class="unit">kg</span></div><div class="sub">≈ ${fmt(co2SavedLb,0)} lb</div></div>
+    </div>
+  `;
+
+  opt.groups.forEach((g, gi) => {
+    const mi = metersToMiles(g.distanceMeters);
+    html += `
+      <div class="group-card">
+        <div class="group-head">
+          <div class="group-title"><span class="dot" style="background:${g.color}"></span><span class="t">Car ${gi+1}</span></div>
+          <div class="group-meta">${g.riders.length} riders · ${fmt(mi,1)} mi</div>
+        </div>
+        ${buildRouteSVG(g)}
+        <div class="route-labels">
+          ${g.riders.map((r,i) => `<span class="chip">${i+1}. ${r.name}</span>`).join('')}
+          <span class="chip" style="border-color:${g.color};color:${g.color}">→ Destination</span>
+        </div>
+      </div>
+    `;
+  });
+
+  body.innerHTML = html;
+  drawMap(opt);
+}
+
+// ---------------- map ----------------
+function ensureMap(){
+  if(map) return;
+  map = L.map('map', { scrollWheelZoom: false });
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors',
+    maxZoom: 19
+  }).addTo(map);
+}
+
+function drawMap(opt){
+  ensureMap();
+  if(mapLayer) mapLayer.remove();
+  mapLayer = L.layerGroup().addTo(map);
+
+  const bounds = [];
+
+  // destination marker
+  const destIcon = L.divIcon({
+    html: `<div style="width:16px;height:16px;background:#25321F;border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 1px #25321F;"></div>`,
+    className: '', iconSize:[16,16], iconAnchor:[8,8]
+  });
+  L.marker([destGlobal.lat, destGlobal.lon], {icon: destIcon}).addTo(mapLayer).bindTooltip('Destination', {permanent:false});
+  bounds.push([destGlobal.lat, destGlobal.lon]);
+
+  opt.groups.forEach(g => {
+    // rider markers
+    g.riders.forEach(r => {
+      const icon = L.divIcon({
+        html: `<div style="width:13px;height:13px;background:${g.color};border:2px solid #fff;border-radius:50%;"></div>`,
+        className:'', iconSize:[13,13], iconAnchor:[6,6]
+      });
+      L.marker([r.lat, r.lon], {icon}).addTo(mapLayer).bindTooltip(r.name);
+      bounds.push([r.lat, r.lon]);
+    });
+    // route line
+    if(g.geometry && g.geometry.coordinates){
+      const latlngs = g.geometry.coordinates.map(c => [c[1], c[0]]);
+      L.polyline(latlngs, { color: g.color, weight: 4, opacity: 0.85 }).addTo(mapLayer);
+    }
+  });
+
+  if(bounds.length) map.fitBounds(bounds, { padding: [30,30] });
+  setTimeout(() => map.invalidateSize(), 150);
+}
+</script>
+</body>
+</html>
