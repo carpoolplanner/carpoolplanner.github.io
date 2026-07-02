@@ -187,22 +187,6 @@ input:focus{outline:2px solid var(--amber);outline-offset:1px;border-color:var(-
 
 .hint{font-size:12.5px;color:var(--ink-soft);margin:-2px 0 10px;}
 
-.feedback-card{
-  background:var(--card);border:1px solid var(--line);border-radius:9px;padding:22px 24px;margin:22px 0 8px;
-}
-.feedback-card h3{font-family:'Lora',serif;font-size:18px;margin:0 0 4px;font-weight:600;}
-.feedback-card p{color:var(--ink-soft);font-size:13.5px;margin:0 0 14px;}
-.feedback-buttons{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
-.fb-btn{
-  border:1px solid var(--ink);background:none;color:var(--ink);padding:9px 18px;border-radius:6px;
-  font-family:'Inter',sans-serif;font-size:13.5px;font-weight:600;cursor:pointer;
-}
-.fb-btn.yes{background:var(--good);border-color:var(--good);color:#fff;}
-.fb-btn.no{color:var(--ink-soft);border-color:var(--line);}
-.fb-btn:disabled{opacity:.55;cursor:default;}
-.feedback-thanks{font-size:13.5px;color:var(--good);font-weight:600;}
-.feedback-count{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-soft);}
-
 footer.credit{background:var(--ink);color:#D8DCC9;margin-top:40px;}
 footer.credit .inner{
   max-width:1120px;margin:0 auto;padding:26px 24px;
@@ -247,7 +231,6 @@ footer.credit .tagline{font-size:12px;color:#8E9880;font-family:'JetBrains Mono'
 <div class="ticker">
   <div class="inner">
     <span class="item">Plans viewed <b id="tickerVisits">—</b></span>
-    <span class="item">Confirmed carpools <b id="tickerConfirmed">—</b></span>
   </div>
 </div>
 
@@ -256,21 +239,15 @@ footer.credit .tagline{font-size:12px;color:#8E9880;font-family:'JetBrains Mono'
 
   <section class="panel">
     <h2>Trip intake</h2>
-    <p class="sub">One shared destination. Everyone else gets picked up along the way.</p>
+    <p class="sub">One shared destination. Everyone else gets picked up along the way. <strong>US addresses only</strong> — the free geocoding and routing services this tool uses don't reliably cover locations outside the United States.</p>
 
-    <div class="field-row">
-      <div>
-        <label for="destAddr">Destination address</label>
-        <input type="text" id="destAddr" placeholder="e.g. 200 W Franklin St, Chapel Hill, NC">
-        <div class="field-error hidden" id="destAddrError"></div>
-      </div>
-      <div>
-        <label for="arriveTime">Arrive by</label>
-        <input type="time" id="arriveTime" value="09:00">
-      </div>
+    <div>
+      <label for="destAddr">Destination address</label>
+      <input type="text" id="destAddr" placeholder="e.g. 200 W Franklin St, Chapel Hill, NC">
+      <div class="field-error hidden" id="destAddrError"></div>
     </div>
 
-    <label>Riders</label>
+    <label style="margin-top:18px;">Riders</label>
     <p class="hint">Full street address, city, and state for best results — e.g. 1114 Violet St, Durham, NC (not just a street name or zip alone).</p>
     <div class="rider-table" id="riderTable"></div>
     <button class="add-rider" id="addRider" type="button">+ Add rider</button>
@@ -279,10 +256,11 @@ footer.credit .tagline{font-size:12px;color:#8E9880;font-family:'JetBrains Mono'
       <div class="assumption">
         <span>Emissions factor</span>
         <input type="text" id="emFactor" value="404">
-        <span>g CO₂ / mile (EPA avg. vehicle — editable)</span>
+        <span>g CO₂ / mile</span>
       </div>
       <button class="go-btn" id="planBtn" type="button">Plan carpools</button>
     </div>
+    <p class="hint" style="margin-top:10px;">The emissions factor is how many grams of CO₂ a typical car emits per mile driven — 404g is the EPA's average across all passenger vehicles. It's the number used to convert "miles saved by carpooling" into "CO₂ avoided." Lower it (e.g. ~250–300g) to model a hybrid, or raise it (e.g. ~500–600g) to model a larger SUV or truck — the estimated CO₂ savings shown for each option will scale up or down accordingly, but the mileage and route numbers won't change.</p>
     <div class="status-line" id="statusLine"></div>
   </section>
 
@@ -294,20 +272,10 @@ footer.credit .tagline{font-size:12px;color:#8E9880;font-family:'JetBrains Mono'
 
     <div class="tabs" id="tabs"></div>
     <div id="optionBody"></div>
-
-    <div class="feedback-card">
-      <h3>Did this plan actually happen?</h3>
-      <p>Let us know if this group carpooled — it turns the estimate above into a real, counted trip.</p>
-      <div class="feedback-buttons">
-        <button class="fb-btn yes" id="fbYes" type="button">Yes, we carpooled</button>
-        <button class="fb-btn no" id="fbNo" type="button">Not this time</button>
-      </div>
-      <div id="feedbackResult" class="feedback-count">— confirmed carpools so far</div>
-    </div>
   </section>
 
   <p class="footnote">
-    Geocoding via OpenStreetMap Nominatim, driving routes and distances via the public OSRM demo server — both free, rate-limited services best suited to prototyping. For production use with reliable uptime, swap in a licensed provider (Google, Mapbox, HERE). Baseline mileage assumes each rider otherwise drives alone, door to door. Route order per car is chosen to minimize total distance ending at the destination; real-world traffic, one-way streets, and pickup timing aren't modeled. "Plans viewed" counts page loads, not unique people; "Confirmed carpools" is self-reported by whoever clicks the button above.
+    Geocoding via OpenStreetMap Nominatim, driving routes and distances via the public OSRM demo server — both free, rate-limited services best suited to prototyping and both limited to US coverage. For production use with reliable uptime or international addresses, swap in a licensed provider (Google, Mapbox, HERE). Baseline mileage assumes each rider otherwise drives alone, door to door. Route order per car is chosen to minimize total distance ending at the destination; real-world traffic, one-way streets, and pickup timing aren't modeled. "Plans viewed" counts page loads, not unique people.
   </p>
 </main>
 </div>
@@ -324,11 +292,9 @@ footer.credit .tagline{font-size:12px;color:#8E9880;font-family:'JetBrains Mono'
 const ROUTE_COLORS = ['#3E7C4A','#B5533D','#4C6FA5','#C6892E','#8B5FA3','#2F8F82'];
 const MILES_PER_METER = 1/1609.34;
 
-// ---------------- visitor / carpool counters (free, no-signup counter API) ----------------
+// ---------------- visitor counter (free, no-signup counter API) ----------------
 const COUNTER_BASE = 'https://countapi.mileshilliard.com/api/v1';
 const KEY_VISITS = 'wildflowerdl_manifest_carpool_visits';
-const KEY_CONFIRMED = 'wildflowerdl_manifest_carpool_confirmed';
-const KEY_DECLINED = 'wildflowerdl_manifest_carpool_declined';
 
 async function counterHit(key){
   try{
@@ -337,36 +303,11 @@ async function counterHit(key){
     return parseInt(data.value, 10);
   }catch(e){ return null; }
 }
-async function counterGet(key){
-  try{
-    const res = await fetch(`${COUNTER_BASE}/get/${key}`);
-    if(!res.ok) return null;
-    const data = await res.json();
-    return parseInt(data.value, 10);
-  }catch(e){ return null; }
-}
 
 (async () => {
   const visits = await counterHit(KEY_VISITS);
   document.getElementById('tickerVisits').textContent = visits !== null ? visits.toLocaleString() : '—';
-  const confirmed = await counterGet(KEY_CONFIRMED);
-  document.getElementById('tickerConfirmed').textContent = confirmed !== null ? confirmed.toLocaleString() : '0';
 })();
-
-async function submitFeedback(didCarpool){
-  document.getElementById('fbYes').disabled = true;
-  document.getElementById('fbNo').disabled = true;
-  const resultEl = document.getElementById('feedbackResult');
-  const val = await counterHit(didCarpool ? KEY_CONFIRMED : KEY_DECLINED);
-  if(didCarpool){
-    if(val !== null) document.getElementById('tickerConfirmed').textContent = val.toLocaleString();
-    resultEl.innerHTML = `<span class="feedback-thanks">Thanks — logged as a real carpool.</span>` + (val !== null ? ` ${val.toLocaleString()} confirmed so far.` : '');
-  }else{
-    resultEl.innerHTML = `Thanks for letting us know.`;
-  }
-}
-document.getElementById('fbYes').addEventListener('click', () => submitFeedback(true));
-document.getElementById('fbNo').addEventListener('click', () => submitFeedback(false));
 
 // ---------------- rider rows ----------------
 let riderSeq = 0;
@@ -608,9 +549,6 @@ function fmt(n, d=1){ return n.toLocaleString(undefined, {minimumFractionDigits:
 
 function renderResults(){
   document.getElementById('resultsSection').classList.remove('hidden');
-  document.getElementById('fbYes').disabled = false;
-  document.getElementById('fbNo').disabled = false;
-  document.getElementById('feedbackResult').textContent = '— confirmed carpools so far';
   renderTabs();
   renderOption(activeOptionIdx);
 }
